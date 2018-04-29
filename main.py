@@ -65,6 +65,8 @@ for epoch in range(2):  # loop over the dataset multiple times
 
         # forward + backward + optimize
         outputs = net(inputs)
+
+        # print(outputs[0].shape)
         loss = criterion(outputs, labels)
         # print(loss)
         loss.backward()

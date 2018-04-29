@@ -14,11 +14,13 @@ class Net(nn.Module):
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
+        x = self.pool(F.relu(self.conv1(x)))  # [4 x 6 x 14 x 14]
+        # print(x.shape)
+        x = self.pool(F.relu(self.conv2(x)))  # [4 x 16 x 5 x 5])
+        # print(x.shape)
+        x = x.view(-1, 16 * 5 * 5) # [4 x 400]
+        print(x.shape)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-    

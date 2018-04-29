@@ -45,7 +45,7 @@ if torch.cuda.is_available():
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
 
-net = model.Net().cuda()
+net = model.GAG_Net().cuda()
 
 
 criterion = nn.CrossEntropyLoss()

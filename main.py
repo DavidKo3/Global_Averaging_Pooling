@@ -46,13 +46,15 @@ if torch.cuda.is_available():
 
 
 net = model.GAG_Net().cuda()
+# net = model.Net().cuda()
 
+# net.weight_init(net.parameters())
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+optimizer_adam = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, )
 
-
-for epoch in range(2):  # loop over the dataset multiple times
+for epoch in range(50):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
@@ -65,9 +67,10 @@ for epoch in range(2):  # loop over the dataset multiple times
 
         # forward + backward + optimize
         outputs = net(inputs)
-
+        # print(outputs)
         # print(outputs[0].shape)
         loss = criterion(outputs, labels)
+
         # print(loss)
         loss.backward()
         optimizer.step()

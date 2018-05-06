@@ -119,5 +119,6 @@ for epoch in range(300):  # loop over the dataset multiple times
             running_loss = 0.0
 
 
+
 print('Finished Training')
 

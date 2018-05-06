@@ -45,27 +45,18 @@ if torch.cuda.is_available():
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
 #
-net = model.GAG_Net().cuda()
-# net = model.Net().cuda()
-
-net.weight_init(net.parameters())
+# net = model.GAG_Net().cuda()
+# # net = model.Net().cuda()
+#
+# net.weight_init(net.parameters())
 
 # ConvNet as fixed feature extractor
-model_conv= torchvision.models.vgg16_bn(pretrained=True)
-for param in model_conv.parameters():
-    param.requires_grad = False
+model_conv= torchvision.models.vgg16_bn(pretrained=True).cuda()
 
 
-print(model_conv)
 
-
-print(model_conv.features)
-# print(model_conv.classifier)
-
-# mod= list(model_conv.features.children())
-# gap_layer = []
-# gap_layer.append()
-# print(mod)
+fine_tune_model = model.FineTuneModel(model_conv, 'vgg16', 10)
+print(fine_tune_model.features)
 
 def adjust_lr(optimizer,epoch, init_lr):
     lr=0
@@ -79,6 +70,7 @@ def adjust_lr(optimizer,epoch, init_lr):
 
     return lr
 
+init_lr = 1e-03
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=init_lr, momentum=0.9, weight_decay=0.0005, nesterov=True)
@@ -108,7 +100,7 @@ for epoch in range(300):  # loop over the dataset multiple times
         optimizer.zero_grad()
 
         # forward + backward + optimize
-        outputs = net(inputs)
+        outputs = fine_tune_model(inputs)
         # print(outputs)
         # print(outputs[0].shape)
         loss = criterion(outputs, labels)

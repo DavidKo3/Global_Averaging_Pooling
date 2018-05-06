@@ -119,6 +119,7 @@ class FineTuneModel(nn.Module):
 
     def forward(self, x):
         f = self.features(x)
+        print(f.shape)
         if self.modelName == 'alexnet':
             f = f.view(f.size(0), 256*6*6)
         elif self.modelName == 'vgg16':

@@ -48,13 +48,14 @@ class GAG_Net(nn.Module):
         # print(x.shape)
         x = self.pool(F.relu(self.conv2_bn(self.conv2(x))))  # [4 x 10 x 5 x 5])
         # print(x.shape)
-        x = x.view(-1, 10,  5 * 5)  # [4 x 10 x 25]
+        # x = x.view(-1, 10,  5 * 5)  # [4 x 10 x 25]
 
         # x = x.view(x.size(0), x.size(1), -1) # [4 x 10 x 25]
-        mask = nn.AdaptiveAvgPool2d((10,1))
-        x = mask(x) # [4 x 10 x 1]
+        mask = nn.AdaptiveAvgPool2d(1) # [ 5 x 5 ] -> [1 x 1]
+        x = mask(x) # [4 x 10 x 1 x 1]
         # x = torch.mean(x.view(x.size(0), x.size(1), -1), dim=2)
-        x = torch.squeeze(x) # [4 x 10]
+        # x = torch.squeeze(x) # [4 x 10]
+        x = x.view(-1, 10) # [4 x 10 x 1 x 1 ] -> [4 x 10]
         x = F.sigmoid(self.fc(x))
         # print(x)
         return x
@@ -101,10 +102,21 @@ class FineTuneModel(nn.Module):
             )
             self.modelName = 'resnet'
         elif arch.startswith('vgg16'):
+            mod = list(original_model.features.children())
+            # print(original_model.features)
+            mod.pop()
+
+            new_feature = nn.Sequential(*mod)
+            original_model.features = new_feature
             self.features = original_model.features
-            self.classifier = nn.Sequential(
-                nn.AdaptiveAvgPool2d((10, 1)),
-                nn.Linear(10, 10),
+            # print('*'*10)
+            # print(original_model.features)
+            self.classifier_1 = nn.Sequential(
+                nn.AdaptiveAvgPool2d(1), # [4, 512, 1, 1]
+                # nn.Linear(1, 10),
+            )
+            self.classifier_2= nn.Sequential(
+                nn.Linear(512, 10)
             )
             self.modelName = 'vgg16'
         else :
@@ -119,14 +131,38 @@ class FineTuneModel(nn.Module):
 
     def forward(self, x):
         f = self.features(x)
-        print(f.shape)
+        # print("1:", f.shape)
+        # f = f.view(-1, 512, 2*2)
+        # print(f.shape)
         if self.modelName == 'alexnet':
             f = f.view(f.size(0), 256*6*6)
         elif self.modelName == 'vgg16':
-            f = f.view(f.size(0), -1)
+            pass
+            # f = f.view(f.size(0),512*4 )
+
         elif self.modelName == 'resnet':
             f = f.view(f.size(0), -1)
 
-        y = self.classifier(f)
-
+        y = self.classifier_1(f)
+        # print("2:", y.shape)
+        y= y.view(-1, 512)
+        y = self.classifier_2(y)
+        # print("3:",y.shape)
         return y
+
+    def weight_init(self, m):
+        if isinstance(m, nn.Linear):
+            size = m.weight.size()
+            fan_out = size[0]  # number of rows
+            fan_in = size[1]  # number of columns
+            variance = np.sqrt(2.0 / (fan_in + fan_out))
+            m.weight.data.normal_(0.0, variance)
+            m.bias.data.normal_(0.0, variance)
+
+        if isinstance(m, nn.Conv2d):
+            size = m.weight.size()
+            fan_out = size[0]  # number of rows
+            fan_in = size[1]  # number of columns
+            variance = np.sqrt(2.0 / (fan_in + fan_out))
+            m.weight.data.normal_(0.0, variance)
+            m.bias.data.normal_(0.0, variance)

@@ -51,12 +51,10 @@ if torch.cuda.is_available():
 # net.weight_init(net.parameters())
 
 # ConvNet as fixed feature extractor
-model_conv= torchvision.models.vgg16_bn(pretrained=True).cuda()
-
-
-
-fine_tune_model = model.FineTuneModel(model_conv, 'vgg16', 10)
-print(fine_tune_model.features)
+model_conv= torchvision.models.vgg16_bn(pretrained=True)
+fine_tune_model = model.FineTuneModel(model_conv, 'vgg16', 10).cuda()
+fine_tune_model.weight_init(fine_tune_model.classifier_1.parameters())
+fine_tune_model.weight_init(fine_tune_model.classifier_2.parameters())
 
 def adjust_lr(optimizer,epoch, init_lr):
     lr=0
@@ -72,9 +70,13 @@ def adjust_lr(optimizer,epoch, init_lr):
 
 init_lr = 1e-03
 
+
+params = list(fine_tune_model.classifier_1.parameters())+list(fine_tune_model.classifier_2.parameters())
+# print(params)
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=init_lr, momentum=0.9, weight_decay=0.0005, nesterov=True)
-optimizer_adam = optim.Adam(net.parameters(), lr=1e-03, betas=(0.9, 0.999), eps=1e-08, weight_decay=0.0005 )
+# optimizer = optim.SGD(params, lr=init_lr, momentum=0.9, weight_decay=0.0005, nesterov=True)
+optimizer_adam = optim.Adam(params, lr=1e-03, betas=(0.9, 0.999), eps=1e-08, weight_decay=0.0005 )
+# optimizer_adam = optim.Adam(net.parameters(), lr=1e-03, betas=(0.9, 0.999), eps=1e-08, weight_decay=0.0005 )
 
 
 
@@ -82,7 +84,7 @@ adaptive_lr = 0.0
 for epoch in range(300):  # loop over the dataset multiple times
 
 
-    adaptive_lr = adjust_lr(optimizer, epoch, init_lr)
+    adaptive_lr = adjust_lr(optimizer_adam, epoch, init_lr)
     print("epoch : %d , adaptive_lr : %0.5f" % (epoch + 1, adaptive_lr))
     # if epoch ==0:
     #     print("epoch : %d , init_lr : %0.5f" % (epoch + 1, init_lr))
@@ -97,7 +99,7 @@ for epoch in range(300):  # loop over the dataset multiple times
         inputs = Variable(inputs.cuda())
         labels = Variable(labels.cuda())
         # zero the parameter gradients
-        optimizer.zero_grad()
+        optimizer_adam.zero_grad()
 
         # forward + backward + optimize
         outputs = fine_tune_model(inputs)

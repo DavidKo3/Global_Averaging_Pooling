@@ -44,18 +44,60 @@ print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 if torch.cuda.is_available():
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
-
+#
 net = model.GAG_Net().cuda()
 # net = model.Net().cuda()
 
-# net.weight_init(net.parameters())
+net.weight_init(net.parameters())
+
+# ConvNet as fixed feature extractor
+model_conv= torchvision.models.vgg16_bn(pretrained=True)
+for param in model_conv.parameters():
+    param.requires_grad = False
+
+
+print(model_conv)
+
+
+print(model_conv.features)
+# print(model_conv.classifier)
+
+# mod= list(model_conv.features.children())
+# gap_layer = []
+# gap_layer.append()
+# print(mod)
+
+def adjust_lr(optimizer,epoch, init_lr):
+    lr=0
+    if epoch ==0:
+        lr = init_lr
+    else:
+        lr = init_lr*(0.5**(epoch//30))
+
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
+    return lr
+
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-optimizer_adam = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, )
+optimizer = optim.SGD(net.parameters(), lr=init_lr, momentum=0.9, weight_decay=0.0005, nesterov=True)
+optimizer_adam = optim.Adam(net.parameters(), lr=1e-03, betas=(0.9, 0.999), eps=1e-08, weight_decay=0.0005 )
 
-for epoch in range(50):  # loop over the dataset multiple times
 
+
+adaptive_lr = 0.0
+for epoch in range(300):  # loop over the dataset multiple times
+
+
+    adaptive_lr = adjust_lr(optimizer, epoch, init_lr)
+    print("epoch : %d , adaptive_lr : %0.5f" % (epoch + 1, adaptive_lr))
+    # if epoch ==0:
+    #     print("epoch : %d , init_lr : %0.5f" % (epoch + 1, init_lr))
+    #     adaptive_lr = adjust_lr(optimizer, epoch, init_lr)
+    # else:
+    #     print("epoch : %d , adaptive_lr : %0.5f" % (epoch+1, adaptive_lr))
+    #     adaptive_lr = adjust_lr(optimizer, epoch, init_lr)
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         # get the inputs
@@ -73,7 +115,7 @@ for epoch in range(50):  # loop over the dataset multiple times
 
         # print(loss)
         loss.backward()
-        optimizer.step()
+        optimizer_adam.step()
 
         # print statistics
         running_loss += loss.data.cpu().numpy()

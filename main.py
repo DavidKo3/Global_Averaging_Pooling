@@ -117,7 +117,7 @@ if __name__ == '__main__':
         #     adaptive_lr = adjust_lr(optimizer, epoch, init_lr)
         running_loss = 0.0
         epoch_loss=0.0
-        # epoch_test_acc = 0.0
+        epoch_total_loss = 0.0
         for i, data in enumerate(trainloader, 0):
             # get the inputs
             inputs, labels = data
@@ -137,18 +137,18 @@ if __name__ == '__main__':
 
             # print statistics
             running_loss += loss.data.cpu().numpy()
-            epoch_loss  += running_loss
+            epoch_total_loss += running_loss
             if i % 2000 == 1999:    # print every 2000 mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss/ 2000))
                 running_loss = 0.0
 
-        epoch_loss = epoch_loss/len(trainloader)
+        epoch_loss = epoch_total_loss/len(trainloader)
         if epoch == 0:
             best_acc = epoch_loss
         if best_acc > epoch_loss:
             best_acc = epoch_loss
-            print("epoch : %d, epoch_loss : %.5f , best_Acc = %.5f/" % (epoch +1, epoch_loss, best_acc))
+            print("epoch : %d, epoch_loss : %.3f , best_Acc = %.3f" % (epoch +1, epoch_loss, best_acc))
 
         if ((epoch+1) % 15) == 0 :
             best_acc = epoch_loss

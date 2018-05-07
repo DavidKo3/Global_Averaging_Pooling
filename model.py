@@ -56,7 +56,7 @@ class GAG_Net(nn.Module):
         # x = torch.mean(x.view(x.size(0), x.size(1), -1), dim=2)
         # x = torch.squeeze(x) # [4 x 10]
         x = x.view(-1, 10) # [4 x 10 x 1 x 1 ] -> [4 x 10]
-        x = F.sigmoid(self.fc(x))
+        x = F.relu(self.fc(x))
         # print(x)
         return x
 
@@ -146,8 +146,9 @@ class FineTuneModel(nn.Module):
             y = self.classifier_1(f)   # [4 x 512 x 1 x 1]
             # print("2:", y.shape)
             y = y.view(-1, 512)
-            y = self.classifier_2(y)  # [4 x 10]
-            # print("3:",y.shape)
+            # y = self.classifier_2(y)  # [4 x 10]
+            y = F.relu(self.classifier_2(y))  # [4 x 10]
+            # print("3:",y)
         else:
             y = self.classifier(f)
 

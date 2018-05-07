@@ -130,10 +130,9 @@ class FineTuneModel(nn.Module):
 
 
     def forward(self, x):
-        f = self.features(x)
-        # print("1:", f.shape)
-        # f = f.view(-1, 512, 2*2)
-        # print(f.shape)
+        f = self.features(x)  # [4 x 512 x 2 x 2]
+        # print("feature dimension : ", f.shape)
+
         if self.modelName == 'alexnet':
             f = f.view(f.size(0), 256*6*6)
         elif self.modelName == 'vgg16':
@@ -143,12 +142,17 @@ class FineTuneModel(nn.Module):
         elif self.modelName == 'resnet':
             f = f.view(f.size(0), -1)
 
-        y = self.classifier_1(f)
-        # print("2:", y.shape)
-        y= y.view(-1, 512)
-        y = self.classifier_2(y)
-        # print("3:",y.shape)
+        if self.modelName =='vgg16':
+            y = self.classifier_1(f)   # [4 x 512 x 1 x 1]
+            # print("2:", y.shape)
+            y = y.view(-1, 512)
+            y = self.classifier_2(y)  # [4 x 10]
+            # print("3:",y.shape)
+        else:
+            y = self.classifier(f)
+
         return y
+
 
     def weight_init(self, m):
         if isinstance(m, nn.Linear):

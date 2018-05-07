@@ -25,7 +25,7 @@ class Net(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x) # [4 x 10]
-        # print(x.shape)
+        # print(x)
         return x
 
 class GAG_Net(nn.Module):
@@ -79,7 +79,7 @@ class GAG_Net(nn.Module):
 
 
 class FineTuneModel(nn.Module):
-    def __init__(self, original_model, arch, num_classes) :
+    def __init__(self, original_model, arch, num_classes, num_layer) :
         super(FineTuneModel, self).__init__()
 
         if arch.startswith('alexnet') :
@@ -102,21 +102,16 @@ class FineTuneModel(nn.Module):
             )
             self.modelName = 'resnet'
         elif arch.startswith('vgg16'):
-            mod = list(original_model.features.children())
-            # print(original_model.features)
-            mod.pop()
-
+            mod = list(original_model.features.children())[:-num_layer]
+            mod.append(nn.Conv2d(512, 1024, 3, stride=1, padding=1))
+            mod.append(nn.AdaptiveAvgPool2d(1))
             new_feature = nn.Sequential(*mod)
             original_model.features = new_feature
+
             self.features = original_model.features
-            # print('*'*10)
-            # print(original_model.features)
-            self.classifier_1 = nn.Sequential(
-                nn.AdaptiveAvgPool2d(1), # [4, 512, 1, 1]
-                # nn.Linear(1, 10),
-            )
-            self.classifier_2= nn.Sequential(
-                nn.Linear(512, 10)
+
+            self.classifier= nn.Sequential(
+                nn.Linear(1024, 10)
             )
             self.modelName = 'vgg16'
         else :
@@ -130,27 +125,19 @@ class FineTuneModel(nn.Module):
 
 
     def forward(self, x):
-        f = self.features(x)  # [4 x 512 x 2 x 2]
+        f = self.features(x)  # [4 x 512 x 8 x 8]
+        #
         # print("feature dimension : ", f.shape)
 
         if self.modelName == 'alexnet':
             f = f.view(f.size(0), 256*6*6)
         elif self.modelName == 'vgg16':
-            pass
-            # f = f.view(f.size(0),512*4 )
+            f = f.view(f.size(0), -1)
 
         elif self.modelName == 'resnet':
             f = f.view(f.size(0), -1)
 
-        if self.modelName =='vgg16':
-            y = self.classifier_1(f)   # [4 x 512 x 1 x 1]
-            # print("2:", y.shape)
-            y = y.view(-1, 512)
-            # y = self.classifier_2(y)  # [4 x 10]
-            y = F.relu(self.classifier_2(y))  # [4 x 10]
-            # print("3:",y)
-        else:
-            y = self.classifier(f)
+        y = F.relu(self.classifier(f))
 
         return y
 
@@ -170,4 +157,3 @@ class FineTuneModel(nn.Module):
             fan_in = size[1]  # number of columns
             variance = np.sqrt(2.0 / (fan_in + fan_out))
             m.weight.data.normal_(0.0, variance)
-            m.bias.data.normal_(0.0, variance)

@@ -103,7 +103,7 @@ class FineTuneModel(nn.Module):
             self.modelName = 'resnet'
         elif arch.startswith('vgg16'):
             mod = list(original_model.features.children())[:-num_layer]
-            mod.append(nn.Conv2d(512, 1024, 3, stride=1, padding=1))
+            mod.append(nn.Conv2d(512, 10, 3, stride=1, padding=1))
             mod.append(nn.AdaptiveAvgPool2d(1))
             new_feature = nn.Sequential(*mod)
             original_model.features = new_feature
@@ -111,7 +111,7 @@ class FineTuneModel(nn.Module):
             self.features = original_model.features
 
             self.classifier= nn.Sequential(
-                nn.Linear(1024, 10)
+                nn.Linear(10, 10)
             )
             self.modelName = 'vgg16'
         else :
@@ -125,8 +125,8 @@ class FineTuneModel(nn.Module):
 
 
     def forward(self, x):
-        f = self.features(x)  # [4 x 512 x 8 x 8]
-        #
+        f = self.features(x)  # [ # x 10 x 1 x 1]
+
         # print("feature dimension : ", f.shape)
 
         if self.modelName == 'alexnet':

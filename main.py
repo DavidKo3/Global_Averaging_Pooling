@@ -87,10 +87,8 @@ if __name__ == '__main__':
     fine_tune_model = model.FineTuneModel(model_conv, config.arch, 10, 1).cuda()
     # print("==============vgg 16 model structure========================/")
     # print(fine_tune_model.features)
-    #
     print(fine_tune_model)
-    # print("="*20)
-    # print(model_conv)
+
 
     fine_tune_model.weight_init(fine_tune_model.classifier.parameters())
 

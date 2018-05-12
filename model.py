@@ -84,6 +84,64 @@ class CNN(nn.Module):
             m.weight.data.normal_(1.0, 0.02)
             m.bias.data.fill_(0)
 
+
+class CNN_minimal(nn.Module):
+    def __init__(self):
+        super(CNN_minimal, self).__init__()
+        self.conv = nn.Sequential(
+            # 3 x 128 x 128
+            nn.Conv2d(3, 32, 3, 1, 1),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(0.2),
+
+            # 32 x 128 x 128
+            nn.Conv2d(32, 64, 3, 1, 1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2),
+
+            # 64 x 128 x 128
+            nn.MaxPool2d(2, 2),
+
+            # 64 x 64 x 64
+            nn.Conv2d(64, 10, 3, 1, 1),
+            nn.BatchNorm2d(10),
+            nn.LeakyReLU(0.2)
+        )
+
+            # # 128 x 64 x 64
+            # nn.Conv2d(128, 256, 3, 1, 1),
+            # nn.BatchNorm2d(256),
+            # nn.LeakyReLU(0.2),
+            #
+            # # 256 x 64 x 64
+            # nn.MaxPool2d(2, 2),
+            #
+            # # 256 x 32 x 32
+            # nn.Conv2d(256, 10, 3, 1, 1),
+            # nn.BatchNorm2d(10),
+            # nn.LeakyReLU(0.2))
+
+        # 256 x 32 x 32
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        # 256 x 1 x 1
+        self.classifier = nn.Linear(10, 10)
+
+    def forward(self, x):
+        features = self.conv(x) # [4 x 10 x 56 x 56 ]
+        flatten = self.avg_pool(features).view(features.size(0), -1)
+        output = self.classifier(flatten)
+        return output
+
+
+    def weight_init_cnn(m):
+        classname = m.__class__.__name__
+        if classname.find('Conv') != -1:
+            m.weight.data.normal_(0.0, 0.02)
+        elif classname.find('BatchNorm') != -1:
+            m.weight.data.normal_(1.0, 0.02)
+            m.bias.data.fill_(0)
+
+
 class GAG_Net(nn.Module):
     def __init__(self):
         super(GAG_Net, self).__init__()
@@ -159,6 +217,7 @@ class FineTuneModel(nn.Module):
             self.modelName = 'resnet'
         elif arch.startswith('vgg16'):
             mod = list(original_model.features.children())[:-num_layer]
+
             mod.append(nn.Conv2d(512, 10, 3, stride=1, padding=1))
             mod.append(nn.AdaptiveAvgPool2d(1))
             new_feature = nn.Sequential(*mod)
@@ -173,10 +232,10 @@ class FineTuneModel(nn.Module):
         else :
             raise("Finetuning not supported on this architecture yet")
 
-
-        # Freeze those weights
-        for p in self.features.parameters():
-            p.requires_grad = False
+        #
+        # # Freeze those weights
+        # for p in self.features.parameters():
+        #     p.requires_grad = False
 
 
 
@@ -213,3 +272,4 @@ class FineTuneModel(nn.Module):
             fan_in = size[1]  # number of columns
             variance = np.sqrt(2.0 / (fan_in + fan_out))
             m.weight.data.normal_(0.0, variance)
+            m.bias.data.normal_(0.0, variance)

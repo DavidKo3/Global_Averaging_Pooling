@@ -23,7 +23,7 @@ def imshow(img):
 parser = argparse.ArgumentParser()
 parser.add_argument('--arch', type=str, default='vgg16')
 parser.add_argument('--lr', type=float, default=0.001)
-parser.add_argument('--batch_size', type=int, default=64)
+parser.add_argument('--batch_size', type=int, default=2000)
 config = parser.parse_args()
 
 if __name__ == '__main__':
@@ -120,6 +120,7 @@ if __name__ == '__main__':
     adaptive_lr = 0.0
     best_acc = 9999
 
+    print("len of trainlodaer : ", len(trainloader))
     for epoch in range(2000):  # loop over the dataset multiple times
         start_time = time.time()
 

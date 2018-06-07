@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
 
     transform = transforms.Compose(
-        [transforms.Resize(128), # vgg16 224
+        [ #transforms.Resize(128), # vgg16 224
          transforms.ToTensor(),
          transforms.Normalize((0., 5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     images, labels = dataiter.next()
 
     # show images
-    imshow(torchvision.utils.make_grid(images))
+    # imshow(torchvision.utils.make_grid(images))
 
     # print labels
 

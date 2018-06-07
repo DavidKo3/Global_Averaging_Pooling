@@ -20,7 +20,6 @@ def imshow(img):
 
 
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--arch', type=str, default='vgg16')
 parser.add_argument('--lr', type=float, default=0.001)

@@ -120,7 +120,7 @@ if __name__ == '__main__':
     adaptive_lr = 0.0
     best_acc = 9999
 
-    for epoch in range(1000):  # loop over the dataset multiple times
+    for epoch in range(2000):  # loop over the dataset multiple times
         start_time = time.time()
 
         adaptive_lr = adjust_lr(optimizer, epoch, init_lr)
